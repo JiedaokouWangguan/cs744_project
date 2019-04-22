@@ -110,6 +110,8 @@ def main():
     model = Net().to(device)
     if args.ps_flag:
         # start a parameter server
+        dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+                                world_size=args.world_size, rank=args.rank)
         ps = ParameterServer(model)
         ps.start()
     else:
