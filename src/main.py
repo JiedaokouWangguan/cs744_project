@@ -94,7 +94,7 @@ def main():
                         help='node rank for distributed training')
     parser.add_argument('--dist-url', default='tcp://127.0.0.1:8088', type=str,
                         help='url used to set up distributed training')
-    parser.add_argument('--dist-backend', default='cpu', type=str,
+    parser.add_argument('--dist-backend', default='gloo', type=str,
                         help='distributed backend')
     ps_flag_parser = parser.add_mutually_exclusive_group(required=False)
     ps_flag_parser.add_argument('--flag', dest='ps_flag', action='store_true')
@@ -121,19 +121,19 @@ def main():
 
         kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
         train_loader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=True, download=True,
+            datasets.MNIST('../data%d'%(args.rank), train=True, download=True,
                            transform=transforms.Compose([
                                transforms.ToTensor(),
                                transforms.Normalize((0.1307,), (0.3081,))
                            ])),
             batch_size=args.batch_size, shuffle=True, **kwargs)
         test_loader = torch.utils.data.DataLoader(
-            datasets.MNIST('../data', train=False, transform=transforms.Compose([
+            datasets.MNIST('../data%d'%(args.rank), train=False, transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
-
+        
         optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=args.rho, model=model)
 
         for epoch in range(1, args.epochs + 1):

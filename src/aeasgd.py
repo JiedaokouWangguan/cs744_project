@@ -1,4 +1,5 @@
 import logging
+import copy
 import torch
 from torch.optim.optimizer import Optimizer, required
 import torch.distributed as dist
@@ -30,7 +31,7 @@ class AEASGD(Optimizer):
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
         m_parameter = torch.cat((m_parameter, payload))
-        dist.isend(tensor=m_parameter, dst=dst)
+        dist.send(tensor=m_parameter, dst=dst)
 
     def step(self, closure=None):
         """Performs a single optimization step.
@@ -46,7 +47,6 @@ class AEASGD(Optimizer):
         # send parameter request every N iterations
         if self.idx % self.param_groups[0]['tau'] == 0:
             self.idx = 0
-
             self.send_message(MessageCode.PullTilde, torch.zeros(self.squash_model(self.model).numel()))
 
             # pull x tilde
@@ -55,16 +55,18 @@ class AEASGD(Optimizer):
 
             # build alpha term
             current_index = 0  # keep track of where to read from parameter_update
-            delta = self.model.parameters().clone()
-            for parameter in delta:
+            delta = copy.deepcopy(self.model)
+            alpha = self.param_groups[0]['rho'] * self.param_groups[0]['lr']
+            for parameter in delta.parameters():
                 numel = parameter.data.numel()
                 size = parameter.data.size()
                 parameter.data.add_(-1, m_parameter[current_index:current_index + numel].view(size))
+                parameter.data.mul_(alpha)
                 current_index += numel
-            delta = delta * self.param_groups[0]['rho'] * self.param_groups[0]['lr']
+            # delta = delta * self.param_groups[0]['rho'] * self.param_groups[0]['lr']
 
             # update x
-            for cur_parameter, cur_delta in zip(self.model.parameters(), delta):
+            for cur_parameter, cur_delta in zip(self.model.parameters(), delta.parameters()):
                 cur_parameter.data.add_(-1, cur_delta.data)
 
             # push delta to update x tilde
