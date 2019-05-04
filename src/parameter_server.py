@@ -17,7 +17,7 @@ class ParameterServer(object):
         _LOGGER.info("Creating ParameterServer")
         self.running = True
         self.model = model
-        self.parameter_shard = torch.rand(self.squash_model(self.model).numel())
+        self.parameter_shard = torch.randn(self.squash_model(self.model).numel())
         self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
 
     def start(self):
