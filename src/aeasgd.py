@@ -46,7 +46,7 @@ class AEASGD(Optimizer):
 
         # send parameter request every N iterations
         if self.idx % self.param_groups[0]['tau'] == 0:
-            self.idx = 0
+            self.idx = 1
             self.send_message(MessageCode.PullTilde, torch.zeros(self.squash_model(self.model).numel()))
 
             # pull x tilde
