@@ -54,7 +54,7 @@ class AEASGD(Optimizer):
             dist.recv(tensor=m_parameter)
 
             # build alpha term
-            current_index = 0  # keep track of where to read from parameter_update
+            current_index = 2  # keep track of where to read from parameter_update
             delta = copy.deepcopy(self.model)
             alpha = self.param_groups[0]['rho'] * self.param_groups[0]['lr']
             for parameter in delta.parameters():
