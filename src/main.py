@@ -64,14 +64,14 @@ def test(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--epochs', type=int, default=5, metavar='N',
+                        help='number of epochs to train (default: 5)')
     parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                        help='learning rate (default: 0.01)')
+                        help='learning rate (default: 0.1)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -84,9 +84,9 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--tau', default=-4, type=int,
+    parser.add_argument('--tau', default=4, type=int,
                         help='hyperparameter used in AEASGD')
-    parser.add_argument('--rho', default=0.1, type=float,
+    parser.add_argument('--rho', default=0.01, type=float,
                         help='hyperparameter used in AEASGD')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
