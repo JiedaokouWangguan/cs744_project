@@ -26,11 +26,11 @@ class ParameterServer(object):
             _LOGGER.info("Polling for message...")
             dist.recv(tensor=self.m_parameter)
             self.receive(int(self.m_parameter[0].item()),
-                         MessageCode(self.m_parameter[1].item()),
+                         int(self.m_parameter[1].item()),
                          self.m_parameter[2:])
 
     def receive(self, sender, message_code, parameter):
-        _LOGGER.info("Processing message: {} from sender {}".format(message_code.name, sender))
+        _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
 
         if message_code == MessageCode.PullTilde:
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
@@ -44,7 +44,7 @@ class ParameterServer(object):
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
-        m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
+        m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
         dist.send(tensor=m_parameter, dst=dst)
 
