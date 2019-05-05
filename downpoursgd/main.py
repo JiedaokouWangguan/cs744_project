@@ -180,8 +180,7 @@ if __name__ == "__main__":
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
     parser.add_argument('--dataset', type=str, default='MNIST', help='which dataset to train on')
-    parser.add_argument('--master', type=str, default='localhost', help='ip address of the master (server) node')
-    parser.add_argument('--port', type=str, default='29500', help='port on master node to communicate with')
+    parser.add_argument('--dist-url', type=str, default='tcp://127.0.0.1:8088', help='url used to init process group')
     args = parser.parse_args()
     print(args)
 
@@ -191,7 +190,7 @@ if __name__ == "__main__":
         """
         os.environ['MASTER_ADDR'] = args.master
         os.environ['MASTER_PORT'] = args.port
-        dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size, init_method="tcp://127.0.0.1:8088")
+        dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size, init_method=args.dist_url)
         # dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size)
         if args.server:
             init_server()
