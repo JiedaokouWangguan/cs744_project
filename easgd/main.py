@@ -113,12 +113,15 @@ def main():
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
         ps = ParameterServer(model)
+        print("starting parameter server....")
         ps.start()
     else:
+        print("before init process group")
         # start a worker
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
 
+        print("after init process group")
         kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
         train_loader = torch.utils.data.DataLoader(
             datasets.MNIST('../data%d'%(args.rank), train=True, download=True,
