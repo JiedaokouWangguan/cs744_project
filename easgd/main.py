@@ -84,7 +84,7 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--tau', default=10, type=int,
+    parser.add_argument('--tau', default=32, type=int,
                         help='hyperparameter used in AEASGD')
     parser.add_argument('--rho', default=0.01, type=float,
                         help='hyperparameter used in AEASGD')
