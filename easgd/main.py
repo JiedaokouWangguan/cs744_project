@@ -92,7 +92,7 @@ def main():
                         help='number of nodes for distributed training')
     parser.add_argument('--rank', default=-1, type=int,
                         help='node rank for distributed training')
-    parser.add_argument('--dist-url', default='tcp://127.0.0.1:8088', type=str,
+    parser.add_argument('--dist-url', default='does not work', type=str,
                         help='url used to set up distributed training')
     parser.add_argument('--dist-backend', default='gloo', type=str,
                         help='distributed backend')
