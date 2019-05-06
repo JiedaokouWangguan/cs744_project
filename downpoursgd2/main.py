@@ -84,9 +84,9 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--n-push', default=5, type=int,
+    parser.add_argument('--n-push', default=1, type=int,
                         help='n push')
-    parser.add_argument('--n-pull', default=5, type=int,
+    parser.add_argument('--n-pull', default=10, type=int,
                         help='n pull')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
