@@ -17,7 +17,7 @@ class DownPourSGD(Optimizer):
 
         defaults = dict(lr=lr, n_push=n_push, n_pull=n_pull)
         self.model = model
-        self.accumulated_gradients = self.squash_model(self.model)
+        self.accumulated_gradients = torch.zeros(self.squash_model(self.model).numel())
         # this sets the initial model parameters
         self.idx = 0
         super(DownPourSGD, self).__init__(params, defaults)

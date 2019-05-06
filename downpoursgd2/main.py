@@ -70,7 +70,7 @@ def main():
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=5, metavar='N',
                         help='number of epochs to train (default: 5)')
-    parser.add_argument('--lr', type=float, default=0.003, metavar='LR',
+    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                         help='learning rate (default: 0.1)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
@@ -84,9 +84,9 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--n-push', default=4, type=int,
+    parser.add_argument('--n-push', default=5, type=int,
                         help='n push')
-    parser.add_argument('--n-pull', default=4, type=int,
+    parser.add_argument('--n-pull', default=5, type=int,
                         help='n pull')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
