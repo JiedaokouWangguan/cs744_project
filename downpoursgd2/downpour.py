@@ -20,6 +20,9 @@ class DownPourSGD(Optimizer):
         self.accumulated_gradients = torch.zeros(self.squash_model(self.model).numel())
         # this sets the initial model parameters
         self.idx = 0
+        self.lr = lr
+        self.n_push = n_push
+        self.n_pull = n_pull
         super(DownPourSGD, self).__init__(params, defaults)
 
     @staticmethod
@@ -43,7 +46,7 @@ class DownPourSGD(Optimizer):
         if closure is not None:
             loss = closure()
 
-        if self.idx % self.param_groups[0]['n_pull'] == 0:
+        if self.idx % self.n_pull == 0:
             self.send_message(MessageCode.ParameterRequest, self.accumulated_gradients)
 
             m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
@@ -59,10 +62,10 @@ class DownPourSGD(Optimizer):
 
         # keep track of accumulated gradients so that we can send
         gradients = self.squash_model(self.model, grad=True)
-        self.accumulated_gradients.add_(-self.param_groups[0]['lr'], gradients)
+        self.accumulated_gradients.add_(-self.lr, gradients)
 
         # send parameter request every N iterations
-        if self.idx % self.param_groups[0]['n_push'] == 0:
+        if self.idx % self.n_push == 0:
             self.send_message(MessageCode.GradientUpdate, self.accumulated_gradients)
             self.accumulated_gradients.zero_()
 
@@ -74,7 +77,7 @@ class DownPourSGD(Optimizer):
                 if p.grad is None:
                     continue
                 d_p = p.grad.data
-                p.data.add_(-group['lr'], d_p)
+                p.data.add_(-self.lr, d_p)
 
         return loss
 
