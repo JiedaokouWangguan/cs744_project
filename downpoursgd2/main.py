@@ -86,7 +86,7 @@ def main():
     # yuanfang added
     parser.add_argument('--n-push', default=1, type=int,
                         help='n push')
-    parser.add_argument('--n-pull', default=10, type=int,
+    parser.add_argument('--n-pull', default=100000000000, type=int,
                         help='n pull')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
