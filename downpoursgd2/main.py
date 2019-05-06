@@ -36,11 +36,6 @@ def train(args, model, device, train_loader, optimizer, epoch):
         output = model(data)
 
         loss = F.nll_loss(output, target)
-        print(data)
-        print(target)
-        print(output)
-        print(loss)
-        a = 1/0
         loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
@@ -71,13 +66,13 @@ def test(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=4, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=32, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=5, metavar='N',
                         help='number of epochs to train (default: 5)')
-    parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+    parser.add_argument('--lr', type=float, default=0.0001, metavar='LR',
                         help='learning rate (default: 0.1)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
@@ -91,9 +86,9 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--n-push', default=3, type=int,
+    parser.add_argument('--n-push', default=100000000000, type=int,
                         help='n push')
-    parser.add_argument('--n-pull', default=3, type=int,
+    parser.add_argument('--n-pull', default=100000000000, type=int,
                         help='n pull')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
