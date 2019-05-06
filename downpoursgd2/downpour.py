@@ -77,7 +77,7 @@ class DownPourSGD(Optimizer):
                 if p.grad is None:
                     continue
                 d_p = p.grad.data
-                p.data.add_(-self.lr, d_p)
+                p.data.add_(self.lr, d_p)
 
         return loss
 
