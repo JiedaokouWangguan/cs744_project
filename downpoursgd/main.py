@@ -106,14 +106,14 @@ def main(args, rank):
                 'training_accuracy': accuracy,
             }
 
-            if i % args.log_interval == 0 and i > 0:    # print every n mini-batches
-                log_obj['test_loss'], log_obj['test_accuracy']= evaluate( net, testloader, args)
-                print("Timestamp: {timestamp} | "
-                      "Iteration: {iteration:6} | "
-                      "Loss: {training_loss:6.4f} | "
-                      "Accuracy : {training_accuracy:6.4f} | "
-                      "Test Loss: {test_loss:6.4f} | "
-                      "Test Accuracy: {test_accuracy:6.4f}".format(**log_obj))
+#             if i % args.log_interval == 0 and i > 0:    # print every n mini-batches
+#                 log_obj['test_loss'], log_obj['test_accuracy']= evaluate( net, testloader, args)
+#                 print("Timestamp: {timestamp} | "
+#                       "Iteration: {iteration:6} | "
+#                       "Loss: {training_loss:6.4f} | "
+#                       "Accuracy : {training_accuracy:6.4f} | "
+#                       "Test Loss: {test_loss:6.4f} | "
+#                       "Test Accuracy: {test_accuracy:6.4f}".format(**log_obj))
 
             logs.append(log_obj)
                 
