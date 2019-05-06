@@ -188,8 +188,6 @@ if __name__ == "__main__":
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.
         """
-        os.environ['MASTER_ADDR'] = args.master
-        os.environ['MASTER_PORT'] = args.port
         dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size, init_method=args.dist_url)
         # dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size)
         if args.server:
