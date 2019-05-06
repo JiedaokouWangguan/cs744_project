@@ -70,7 +70,7 @@ def main():
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=5, metavar='N',
                         help='number of epochs to train (default: 5)')
-    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+    parser.add_argument('--lr', type=float, default=0.003, metavar='LR',
                         help='learning rate (default: 0.1)')
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                         help='SGD momentum (default: 0.5)')
@@ -84,12 +84,10 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--n-push', default=3, type=int,
+    parser.add_argument('--n-push', default=4, type=int,
                         help='n push')
-    parser.add_argument('--n-pull', default=9, type=int,
+    parser.add_argument('--n-pull', default=4, type=int,
                         help='n pull')
-    parser.add_argument('--rho', default=0.01, type=float,
-                        help='hyperparameter used in AEASGD')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
     parser.add_argument('--rank', default=-1, type=int,
@@ -140,8 +138,8 @@ def main():
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
-        
-        optimizer = DownPourSGD(model.parameters(), lr=args.lr, n_push=args.n_push, n_pull=args.n_pull, rho=args.rho, model=model)
+
+        optimizer = DownPourSGD(model.parameters(), lr=args.lr, n_push=args.n_push, n_pull=args.n_pull, model=model)
 
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, epoch)

@@ -10,12 +10,12 @@ _LOGGER = logging.getLogger(__name__)
 class DownPourSGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, n_push=required, n_pull=required, rho=required, model=required):
+    def __init__(self, params, lr=required, n_push=required, n_pull=required, model=required):
 
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
 
-        defaults = dict(lr=lr, n_push=n_push, n_pull=n_pull, rho=rho)
+        defaults = dict(lr=lr, n_push=n_push, n_pull=n_pull)
         self.model = model
         self.accumulated_gradients = self.squash_model(self.model)
         # this sets the initial model parameters
