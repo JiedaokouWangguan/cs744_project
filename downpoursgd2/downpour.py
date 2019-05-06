@@ -46,6 +46,17 @@ class DownPourSGD(Optimizer):
         if self.idx % self.param_groups[0]['n_pull'] == 0:
             self.send_message(MessageCode.ParameterRequest, self.accumulated_gradients)
 
+            m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
+            dist.recv(tensor=m_parameter)
+
+            # build alpha term
+            current_index = 2
+            for parameter in self.model.parameters():
+                numel = parameter.data.numel()
+                size = parameter.data.size()
+                parameter.data.copy_(m_parameter[current_index:current_index + numel].view(size))
+                current_index += numel
+
         # keep track of accumulated gradients so that we can send
         gradients = self.squash_model(self.model, grad=True)
         self.accumulated_gradients.add_(-self.param_groups[0]['lr'], gradients)
