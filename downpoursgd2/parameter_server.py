@@ -30,13 +30,15 @@ class ParameterServer(object):
                          self.m_parameter[2:])
 
     def receive(self, sender, message_code, parameter):
-        _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
+        print("Processing message: {} from sender {}".format(message_code, sender))
 
         if message_code == MessageCode.ParameterRequest:
             self.send_message(MessageCode.ParameterRequest, self.parameter_shard, dst=sender)
 
         elif message_code == MessageCode.GradientUpdate:
             self.parameter_shard.add_(parameter)
+        else:
+            print("unknown msg")
 
     @staticmethod
     def send_message(message_code, payload, dst=0):
