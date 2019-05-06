@@ -64,7 +64,7 @@ def test(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=16, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
@@ -84,9 +84,9 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
-    parser.add_argument('--n-push', default=4, type=int,
+    parser.add_argument('--n-push', default=3, type=int,
                         help='n push')
-    parser.add_argument('--n-pull', default=6, type=int,
+    parser.add_argument('--n-pull', default=3, type=int,
                         help='n pull')
     parser.add_argument('--world-size', default=-1, type=int,
                         help='number of nodes for distributed training')
