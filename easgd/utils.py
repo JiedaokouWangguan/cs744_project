@@ -14,7 +14,7 @@ def quantize_tensor(x, num_bits=8):
     scale = (max_val - min_val) / (qmax - qmin)
     scale = 1 if scale == 0 else scale
     initial_zero_point = qmin - min_val / scale
-    
+
     zero_point = 0
     if initial_zero_point < qmin:
         zero_point = qmin
@@ -26,7 +26,7 @@ def quantize_tensor(x, num_bits=8):
     zero_point = int(zero_point)
     q_x = zero_point + x / scale
     q_x.clamp_(qmin, qmax).round_()
-    q_x = q_x.round().byte()
+    q_x = q_x.round()
 
     m_parameter = torch.Tensor([scale, zero_point])
     m_parameter = torch.cat((m_parameter, q_x))
