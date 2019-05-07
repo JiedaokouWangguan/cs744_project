@@ -96,7 +96,7 @@ def main():
                         help='node rank for distributed training')
     parser.add_argument('--dist-url', default='does not work', type=str,
                         help='url used to set up distributed training')
-    parser.add_argument('--dist-backend', default='gloo', type=str,
+    parser.add_argument('--dist-backend', default='tcp', type=str,
                         help='distributed backend')
     ps_flag_parser = parser.add_mutually_exclusive_group(required=False)
     ps_flag_parser.add_argument('--flag', dest='ps_flag', action='store_true')
