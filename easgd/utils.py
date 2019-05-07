@@ -8,6 +8,7 @@ class MessageCode(object):
 
 
 def quantize_tensor(x, num_bits=8):
+    print("x: {}".format(x))
     qmin = 0.
     qmax = 2.**num_bits - 1.
     min_val, max_val = x.min(), x.max()
@@ -30,6 +31,7 @@ def quantize_tensor(x, num_bits=8):
 
     m_parameter = torch.Tensor([scale, zero_point])
     m_parameter = torch.cat((m_parameter, q_x))
+    print("m_param: {}".format(m_parameter))
 
     return m_parameter
 
