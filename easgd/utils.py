@@ -11,11 +11,10 @@ def quantize_tensor(x, num_bits=8):
     qmin = 0.
     qmax = 2.**num_bits - 1.
     min_val, max_val = x.min(), x.max()
-    print("min: {}, max: {}".format(min_val, max_val))
     scale = (max_val - min_val) / (qmax - qmin)
-    print("scale: {}".format(scale))
+    scale = 1 if scale == 0 else scale
     initial_zero_point = qmin - min_val / scale
-    print("init_zero_point: {}".format(initial_zero_point))
+    
     zero_point = 0
     if initial_zero_point < qmin:
         zero_point = qmin
