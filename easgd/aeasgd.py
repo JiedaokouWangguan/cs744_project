@@ -4,6 +4,7 @@ import torch
 from torch.optim.optimizer import Optimizer, required
 import torch.distributed as dist
 from utils import MessageCode
+import utils
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 class AEASGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, tau=required, rho=required, model=required):
+    def __init__(self, params, lr=required, tau=required, rho=required, model=required, quantize_num_bits=0):
 
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -19,15 +20,17 @@ class AEASGD(Optimizer):
         defaults = dict(lr=lr, tau=tau, rho=rho)
 
         self.model = model
+        self.quantize_num_bits = quantize_num_bits
         # this sets the initial model parameters
         self.idx = 0
         super(AEASGD, self).__init__(params, defaults)
 
-    @staticmethod
-    def send_message(message_code, payload, dst=0):
+    def send_message(self, message_code, payload, dst=0):
         """Sends a message to a destination
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
+        if self.quantize_num_bits != 0:
+            payload = utils.quantize_tensor(payload, self.quantize_num_bits)
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
@@ -54,7 +57,10 @@ class AEASGD(Optimizer):
             dist.recv(tensor=m_parameter)
 
             # build alpha term
-            current_index = 2  # keep track of where to read from parameter_update
+            m_parameter = m_parameter[2:]
+            if self.quantize_num_bits != 0:
+                m_parameter = utils.dequantize_tensor(m_parameter)
+            current_index = 0  # keep track of where to read from parameter_update
             delta = copy.deepcopy(self.model)
             alpha = self.param_groups[0]['rho'] * self.param_groups[0]['lr']
             for parameter in delta.parameters():

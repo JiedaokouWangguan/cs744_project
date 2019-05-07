@@ -84,6 +84,8 @@ def main():
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
     # yuanfang added
+    parser.add_argument('--quantize-nbits', default=0, type=int,
+                        help='quantize')
     parser.add_argument('--tau', default=32, type=int,
                         help='hyperparameter used in AEASGD')
     parser.add_argument('--rho', default=0.01, type=float,
@@ -99,7 +101,7 @@ def main():
     ps_flag_parser = parser.add_mutually_exclusive_group(required=False)
     ps_flag_parser.add_argument('--flag', dest='ps_flag', action='store_true')
     ps_flag_parser.add_argument('--no-flag', dest='ps_flag', action='store_false')
-    parser.set_defaults(ps_flag=True)
+    parser.set_defaults(ps_flag=False)
 
     args = parser.parse_args()
     use_cuda = False
@@ -114,7 +116,7 @@ def main():
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
         print("after init process group")
-        ps = ParameterServer(model)
+        ps = ParameterServer(model, quantize_num_bits=args.quantize_nbits)
         print("starting parameter server....")
         ps.start()
     else:
@@ -139,7 +141,7 @@ def main():
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
         
-        optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=args.rho, model=model)
+        optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=args.rho, model=model, quantize_num_bits=args.quantize_nbits)
 
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, epoch)

@@ -3,6 +3,7 @@ import torch
 from torch.optim.optimizer import Optimizer, required
 import torch.distributed as dist
 from utils import MessageCode
+import utils
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 class DownPourSGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, n_push=required, n_pull=required, model=required):
+    def __init__(self, params, lr=required, n_push=required, n_pull=required, model=required, quantize_num_bits=0):
 
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -20,16 +21,18 @@ class DownPourSGD(Optimizer):
         self.accumulated_gradients = torch.zeros(self.squash_model(self.model).numel())
         # this sets the initial model parameters
         self.idx = 0
+        self.quantize_num_bits = quantize_num_bits
         self.lr = lr
         self.n_push = n_push
         self.n_pull = n_pull
         super(DownPourSGD, self).__init__(params, defaults)
 
-    @staticmethod
-    def send_message(message_code, payload, dst=0):
+    def send_message(self, message_code, payload, dst=0):
         """Sends a message to a destination
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
+        if self.quantize_num_bits != 0:
+            payload = utils.quantize_tensor(payload, self.quantize_num_bits)
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
@@ -53,7 +56,10 @@ class DownPourSGD(Optimizer):
             dist.recv(tensor=m_parameter)
 
             # build alpha term
-            current_index = 2
+            m_parameter = m_parameter[2:]
+            if self.quantize_num_bits != 0:
+                m_parameter = utils.dequantize_tensor(m_parameter)
+            current_index = 0  # keep track of where to read from parameter_update
             for parameter in self.model.parameters():
                 numel = parameter.data.numel()
                 size = parameter.data.size()

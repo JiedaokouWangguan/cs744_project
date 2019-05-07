@@ -89,6 +89,8 @@ def main():
     # yuanfang added
     parser.add_argument('--n-push', default=5, type=int,
                         help='n push')
+    parser.add_argument('--quantize-nbits', default=0, type=int,
+                        help='quantize')
     parser.add_argument('--n-pull', default=5, type=int,
                         help='n pull')
     parser.add_argument('--world-size', default=-1, type=int,
@@ -102,7 +104,7 @@ def main():
     ps_flag_parser = parser.add_mutually_exclusive_group(required=False)
     ps_flag_parser.add_argument('--flag', dest='ps_flag', action='store_true')
     ps_flag_parser.add_argument('--no-flag', dest='ps_flag', action='store_false')
-    parser.set_defaults(ps_flag=True)
+    parser.set_defaults(ps_flag=False)
 
     args = parser.parse_args()
     use_cuda = False
@@ -117,7 +119,7 @@ def main():
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
         print("after init process group")
-        ps = ParameterServer(model)
+        ps = ParameterServer(model, quantize_num_bits=args.quantize_nbits)
         print("starting parameter server....")
         ps.start()
     else:
@@ -142,7 +144,7 @@ def main():
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
-        optimizer = DownPourSGD(model.parameters(), lr=args.lr, n_push=args.n_push, n_pull=args.n_pull, model=model)
+        optimizer = DownPourSGD(model.parameters(), lr=args.lr, n_push=args.n_push, n_pull=args.n_pull, model=model, quantize_num_bits=args.quantize_nbits)
 
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, epoch)

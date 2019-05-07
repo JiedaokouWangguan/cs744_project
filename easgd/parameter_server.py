@@ -7,16 +7,19 @@ import torch
 import torch.optim
 import torch.distributed as dist
 from utils import MessageCode
+import utils
+
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class ParameterServer(object):
 
-    def __init__(self, model):
+    def __init__(self, model, quantize_num_bits=0):
         _LOGGER.info("Creating ParameterServer")
         self.running = True
         self.model = model
+        self.quantize_num_bits = quantize_num_bits
         self.parameter_shard = torch.randn(self.squash_model(self.model).numel())
         self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
 
@@ -36,13 +39,16 @@ class ParameterServer(object):
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
 
         elif message_code == MessageCode.UpdateTilde:
+            if self.quantize_num_bits != 0:
+                parameter = utils.dequantize_tensor(parameter)
             self.parameter_shard.add_(parameter)
 
-    @staticmethod
-    def send_message(message_code, payload, dst=0):
+    def send_message(self, message_code, payload, dst=0):
         """Sends a message to a destination
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
+        if self.quantize_num_bits != 0:
+            payload = utils.quantize_tensor(payload, self.quantize_num_bits)
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
