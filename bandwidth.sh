@@ -1,4 +1,4 @@
-# usage run.sh {rank} {bandwidth(xMbps)} {downpoursgd2|easgd}
+# usage run.sh {rank} {bandwidth(xMbit)} {downpoursgd2|easgd}
 
 function terminate_cluster() {
     echo "Terminating the servers"
