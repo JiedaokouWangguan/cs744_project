@@ -17,7 +17,7 @@ python main.py --world-size 3 --rank 2 --dist-url 'tcp://node0:8088'
 
 ## bandwidth.sh
 ```
-bandwidth.sh {rank} {bandwidth(xMbps)} {downpoursgd2|easgd}
+bandwidth.sh {rank} {bandwidth(xMbit)} {downpoursgd2|easgd}
 ```
 
 ## latency.sh
