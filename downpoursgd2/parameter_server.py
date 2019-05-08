@@ -35,7 +35,7 @@ class ParameterServer(object):
             self.receive(int(self.m_parameter[0].item()),
                          int(self.m_parameter[1].item()),
                          self.m_parameter[2:])
-            if self.num_terminate == self.world_size:
+            if self.num_terminate == self.world_size-1:
                 self.running = False
         print("parameter server terminated.")
 
