@@ -6,6 +6,7 @@ import torch.distributed as dist
 from torchvision import datasets, transforms
 from parameter_server import ParameterServer
 from downpour import DownPourSGD
+from utils import MessageCode
 
 
 class Net(nn.Module):
@@ -149,6 +150,8 @@ def main():
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, epoch)
             test(args, model, device, test_loader)
+
+        optimizer.send_message(MessageCode.WorkerTerminate, torch.randn(optimizer.squash_model(optimizer.model).numel()))
 
         if args.save_model:
             torch.save(model.state_dict(), "mnist_cnn.pt")

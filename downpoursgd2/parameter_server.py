@@ -14,10 +14,12 @@ _LOGGER = logging.getLogger(__name__)
 
 class ParameterServer(object):
 
-    def __init__(self, model, quantize_num_bits=0):
+    def __init__(self, model, world_size, quantize_num_bits=0):
         _LOGGER.info("Creating ParameterServer")
         self.running = True
         self.model = model
+        self.world_size = world_size
+        self.num_terminate = 0
         self.quantize_num_bits = quantize_num_bits
         self.parameter_shard = torch.randn(self.squash_model(self.model).numel())
         if quantize_num_bits != 0:
@@ -33,6 +35,9 @@ class ParameterServer(object):
             self.receive(int(self.m_parameter[0].item()),
                          int(self.m_parameter[1].item()),
                          self.m_parameter[2:])
+            if self.num_terminate == self.world_size:
+                self.running = False
+        print("parameter server terminated.")
 
     def receive(self, sender, message_code, parameter):
         _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
@@ -44,6 +49,8 @@ class ParameterServer(object):
             if self.quantize_num_bits != 0:
                 parameter = utils.dequantize_tensor(parameter)
             self.parameter_shard.add_(parameter)
+        elif message_code == MessageCode.WorkerTerminate:
+            self.num_terminate += 1
         else:
             print("unknown msg")
 
