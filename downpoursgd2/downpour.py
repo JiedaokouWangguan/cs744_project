@@ -51,8 +51,10 @@ class DownPourSGD(Optimizer):
 
         if self.idx % self.n_pull == 0:
             self.send_message(MessageCode.ParameterRequest, self.accumulated_gradients)
-
-            m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
+            if self.quantize_num_bits != 0:
+                m_parameter = torch.zeros(self.squash_model(self.model).numel() + 4)
+            else:
+                m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
             dist.recv(tensor=m_parameter)
 
             # build alpha term
