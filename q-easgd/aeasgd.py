@@ -3,8 +3,8 @@ import copy
 import torch
 from torch.optim.optimizer import Optimizer, required
 import torch.distributed as dist
-from utils import MessageCode
-import utils
+from ..utils import MessageCode
+from ..utils import dequantize_tensor, quantize_tensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class AEASGD(Optimizer):
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
-        m_parameter = utils.quantize_tensor(m_parameter, self.quantize_num_bits)
+        m_parameter = quantize_tensor(m_parameter, self.quantize_num_bits)
         print(m_parameter)
         print(m_parameter.size())
         dist.send(tensor=m_parameter, dst=dst)
@@ -59,7 +59,7 @@ class AEASGD(Optimizer):
 
             # build alpha term
 
-            m_parameter = utils.dequantize_tensor(m_parameter)
+            m_parameter = dequantize_tensor(m_parameter)
             m_parameter = m_parameter[2:]
             current_index = 0  # keep track of where to read from parameter_update
             delta = copy.deepcopy(self.model)

@@ -6,7 +6,7 @@ import torch.distributed as dist
 from torchvision import datasets, transforms
 from parameter_server import ParameterServer
 from aeasgd import AEASGD
-from utils import MessageCode
+from ..utils import MessageCode
 
 
 class Net(nn.Module):

@@ -6,8 +6,8 @@ import logging
 import torch
 import torch.optim
 import torch.distributed as dist
-from utils import MessageCode
-import utils
+from ..utils import MessageCode
+from ..utils import dequantize_tensor, quantize_tensor
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class ParameterServer(object):
             _LOGGER.info("Polling for message...")
             print(self.m_parameter.size())
             dist.recv(tensor=self.m_parameter)
-            self.m_parameter = utils.dequantize_tensor(self.m_parameter)
+            self.m_parameter = dequantize_tensor(self.m_parameter)
             self.receive(int(self.m_parameter[0].item()),
                          int(self.m_parameter[1].item()),
                          self.m_parameter[2:])
@@ -57,7 +57,7 @@ class ParameterServer(object):
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
-        m_parameter = utils.quantize_tensor(m_parameter, self.quantize_num_bits)
+        m_parameter = quantize_tensor(m_parameter, self.quantize_num_bits)
         dist.send(tensor=m_parameter, dst=dst)
 
     @staticmethod

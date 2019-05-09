@@ -6,8 +6,8 @@ import logging
 import torch
 import torch.optim
 import torch.distributed as dist
-from utils import MessageCode
-import utils
+from ..utils import MessageCode
+from ..utils import dequantize_tensor, quantize_tensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class ParameterServer(object):
 
         elif message_code == MessageCode.GradientUpdate:
             if self.quantize_num_bits != 0:
-                parameter = utils.dequantize_tensor(parameter)
+                parameter = dequantize_tensor(parameter)
             self.parameter_shard.add_(parameter)
         elif message_code == MessageCode.WorkerTerminate:
             self.num_terminate += 1
@@ -59,7 +59,7 @@ class ParameterServer(object):
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
         if self.quantize_num_bits != 0:
-            payload = utils.quantize_tensor(payload, self.quantize_num_bits)
+            payload = quantize_tensor(payload, self.quantize_num_bits)
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
