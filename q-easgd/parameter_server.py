@@ -30,7 +30,7 @@ class ParameterServer(object):
         while self.running:
             _LOGGER.info("Polling for message...")
             dist.recv(tensor=self.m_parameter)
-            m_parameter = utils.dequantize_tensor(m_parameter)
+            self.m_parameter = utils.dequantize_tensor(self.m_parameter)
             self.receive(int(self.m_parameter[0].item()),
                          int(self.m_parameter[1].item()),
                          self.m_parameter[2:])
