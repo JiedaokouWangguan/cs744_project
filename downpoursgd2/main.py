@@ -120,7 +120,7 @@ def main():
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
         print("after init process group")
-        ps = ParameterServer(model, quantize_num_bits=args.quantize_nbits)
+        ps = ParameterServer(model, args.world_size, quantize_num_bits=args.quantize_nbits)
         print("starting parameter server....")
         ps.start()
     else:
