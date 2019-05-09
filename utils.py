@@ -41,9 +41,7 @@ def quantize_tensor(x, num_bits):
 
     m_parameter = torch.Tensor([x1, x2, x3, x4, zero_point])
     m_parameter = torch.cat((q_x, m_parameter))
-    print("shabi mp1: {}".format(m_parameter))
     m_parameter = m_parameter.round().to(torch.int16)
-    print("shabi mp2: {}".format(m_parameter))
     return m_parameter
 
 
@@ -62,8 +60,5 @@ def dequantize_tensor(m_parameter):
     scale = unpack('f', scale)[0]
     zero_point = int(m_parameter[-1].item())
     q_x = m_parameter[:-5]
-    print("scale: {}".format(scale))
-    print("qx: {}".format(q_x))
     result = scale * (q_x.float() - zero_point)
-    print("result: {}".format(result))
     return result

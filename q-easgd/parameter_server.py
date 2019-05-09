@@ -29,7 +29,9 @@ class ParameterServer(object):
         while self.running:
             _LOGGER.info("Polling for message...")
             m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
+            print("1")
             dist.recv(tensor=m_parameter)
+            print("2")
             m_parameter = dequantize_tensor(m_parameter)
             self.receive(int(m_parameter[0].item()),
                          int(m_parameter[1].item()),
