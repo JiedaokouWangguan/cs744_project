@@ -43,7 +43,7 @@ class ParameterServer(object):
 
     def receive(self, sender, message_code, parameter):
         _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
-
+        print("message_code: {}".format(message_code))
         if message_code == MessageCode.PullTilde:
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
 
