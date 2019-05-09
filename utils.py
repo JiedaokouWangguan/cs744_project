@@ -61,5 +61,8 @@ def dequantize_tensor(m_parameter):
     scale = unpack('f', scale)[0]
     zero_point = int(m_parameter[-1].item())
     q_x = m_parameter[:-5]
+    print("scale: {}".format(scale))
+    print("qx: {}".format(q_x))
     result = scale * (q_x.float() - zero_point)
+    print("result: {}".format(result))
     return result
