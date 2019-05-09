@@ -117,7 +117,8 @@ def main():
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
         print("after init process group")
-        ps = ParameterServer(model, args.world_size, quantize_num_bits=args.quantize_nbits)
+        quantize_num_bits = 8 if args.quantize_nbits == 0 else args.quantize_nbits
+        ps = ParameterServer(model, args.world_size, quantize_num_bits=quantize_num_bits)
         print("starting parameter server....")
         ps.start()
     else:
@@ -141,8 +142,8 @@ def main():
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
-        
-        optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=args.rho, model=model, quantize_num_bits=args.quantize_nbits)
+        quantize_num_bits = 8 if args.quantize_nbits == 0 else args.quantize_nbits
+        optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=args.rho, model=model, quantize_num_bits=quantize_num_bits)
 
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, epoch)

@@ -23,16 +23,14 @@ class ParameterServer(object):
         self.num_terminate = 0
         self.quantize_num_bits = quantize_num_bits
         self.parameter_shard = torch.randn(self.squash_model(self.model).numel())
-        if quantize_num_bits != 0:
-            self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 4)
-        else:
-            self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 2)
+        self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7)
 
     def start(self):
         _LOGGER.info("Started Running!")
         while self.running:
             _LOGGER.info("Polling for message...")
             dist.recv(tensor=self.m_parameter)
+            m_parameter = utils.dequantize_tensor(m_parameter)
             self.receive(int(self.m_parameter[0].item()),
                          int(self.m_parameter[1].item()),
                          self.m_parameter[2:])
@@ -47,8 +45,6 @@ class ParameterServer(object):
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
 
         elif message_code == MessageCode.UpdateTilde:
-            if self.quantize_num_bits != 0:
-                parameter = utils.dequantize_tensor(parameter)
             self.parameter_shard.add_(parameter)
         elif message_code == MessageCode.WorkerTerminate:
             self.num_terminate += 1
@@ -57,12 +53,11 @@ class ParameterServer(object):
         """Sends a message to a destination
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
-        if self.quantize_num_bits != 0:
-            payload = utils.quantize_tensor(payload, self.quantize_num_bits)
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
-        dist.isend(tensor=m_parameter, dst=dst)
+        m_parameter = utils.quantize_tensor(m_parameter, self.quantize_num_bits)
+        dist.send(tensor=m_parameter, dst=dst)
 
     @staticmethod
     def squash_model(model):
