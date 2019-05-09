@@ -30,7 +30,7 @@ class AEASGD(Optimizer):
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
-        m_parameter = torch.Tensor([float(dist.get_rank()), float(message_code)])
+        m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
         m_parameter = quantize_tensor(m_parameter, self.quantize_num_bits)
         dist.send(tensor=m_parameter, dst=dst)
