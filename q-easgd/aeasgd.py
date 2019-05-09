@@ -52,7 +52,7 @@ class AEASGD(Optimizer):
             self.send_message(MessageCode.PullTilde, torch.randn(self.squash_model(self.model).numel()))
 
             # pull x tilde
-            m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).byte()
+            m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
             dist.recv(tensor=m_parameter)
 
             # build alpha term

@@ -23,17 +23,17 @@ class ParameterServer(object):
         self.num_terminate = 0
         self.quantize_num_bits = quantize_num_bits
         self.parameter_shard = torch.randn(self.squash_model(self.model).numel())
-        self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).byte()
 
     def start(self):
         _LOGGER.info("Started Running!")
         while self.running:
             _LOGGER.info("Polling for message...")
-            dist.recv(tensor=self.m_parameter)
-            self.m_parameter = dequantize_tensor(self.m_parameter)
-            self.receive(int(self.m_parameter[0].item()),
-                         int(self.m_parameter[1].item()),
-                         self.m_parameter[2:])
+            m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
+            dist.recv(tensor=m_parameter)
+            m_parameter = dequantize_tensor(m_parameter)
+            self.receive(int(m_parameter[0].item()),
+                         int(m_parameter[1].item()),
+                         m_parameter[2:])
             if self.num_terminate == self.world_size-1:
                 self.running = False
         print("parameter server terminated.")
