@@ -2,7 +2,7 @@ from struct import pack, unpack
 
 b = pack('f', -3.22222e-25)
 print(-3.2222e-25)
-c = unpack('i', b)[0]
+c = unpack('I', b)[0]
 
 # print(unpack('i', b)[0])
 print(c)

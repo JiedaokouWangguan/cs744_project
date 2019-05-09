@@ -32,8 +32,7 @@ def quantize_tensor(x, num_bits):
     q_x.clamp_(qmin, qmax).round_()
 
     b = pack('f', scale)
-    b = pack('f', scale)
-    c = unpack('i', b)[0]
+    c = unpack('I', b)[0]
     x1 = 0x000000FF & c
     x2 = (0X0000FF00 & c) >> 8
     x3 = (0x00FF0000 & c) >> 16
