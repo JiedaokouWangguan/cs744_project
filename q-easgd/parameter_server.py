@@ -36,6 +36,7 @@ class ParameterServer(object):
             self.receive(int(m_parameter[0].item()),
                          int(m_parameter[1].item()),
                          m_parameter[2:])
+            print("3")
             if self.num_terminate == self.world_size-1:
                 self.running = False
         print("parameter server terminated.")
@@ -44,7 +45,9 @@ class ParameterServer(object):
         _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
 
         if message_code == MessageCode.PullTilde:
+            print("----------bs")
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
+            print("----------as")
 
         elif message_code == MessageCode.UpdateTilde:
             self.parameter_shard.add_(parameter)

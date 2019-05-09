@@ -53,7 +53,9 @@ class AEASGD(Optimizer):
 
             # pull x tilde
             m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
+            print("----------br")
             dist.recv(tensor=m_parameter)
+            print("----------ar")
 
             # build alpha term
 
