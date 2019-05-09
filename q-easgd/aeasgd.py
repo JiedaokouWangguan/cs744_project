@@ -34,6 +34,7 @@ class AEASGD(Optimizer):
         m_parameter = torch.cat((m_parameter, payload))
         m_parameter = utils.quantize_tensor(m_parameter, self.quantize_num_bits)
         print(m_parameter)
+        print(m_parameter.size())
         dist.send(tensor=m_parameter, dst=dst)
 
     def step(self, closure=None):
