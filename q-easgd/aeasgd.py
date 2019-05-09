@@ -49,8 +49,9 @@ class AEASGD(Optimizer):
         # send parameter request every N iterations
         if self.idx % self.param_groups[0]['tau'] == 0:
             self.idx = 1
+            print("----------bs1")
             self.send_message(MessageCode.PullTilde, torch.randn(self.squash_model(self.model).numel()))
-
+            print("----------as1")
             # pull x tilde
             m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
             print("----------br")
@@ -77,8 +78,9 @@ class AEASGD(Optimizer):
                 cur_parameter.data.add_(-1, cur_delta.data)
 
             # push delta to update x tilde
+            print("----------bs2")
             self.send_message(MessageCode.UpdateTilde, self.squash_model(delta))
-
+            print("----------as2")
         else:
             self.idx += 1
 
