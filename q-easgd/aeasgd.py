@@ -30,9 +30,9 @@ class AEASGD(Optimizer):
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
-        m_parameter = torch.Tensor([dist.get_rank(), message_code])
-        m_parameter = torch.cat((m_parameter, payload))
-        m_parameter = quantize_tensor(m_parameter, self.quantize_num_bits)
+        m_parameter = quantize_tensor(payload, self.quantize_num_bits)
+        meta = torch.Tensor([dist.get_rank(), message_code]).to(torch.int16)
+        m_parameter = torch.cat((meta, m_parameter))
         dist.send(tensor=m_parameter, dst=dst)
 
     def step(self, closure=None):
@@ -49,19 +49,15 @@ class AEASGD(Optimizer):
         # send parameter request every N iterations
         if self.idx % self.param_groups[0]['tau'] == 0:
             self.idx = 1
-            print("----------bs1")
             self.send_message(MessageCode.PullTilde, torch.randn(self.squash_model(self.model).numel()))
-            print("----------as1")
             # pull x tilde
             m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
-            print("----------br")
             dist.recv(tensor=m_parameter)
-            print("----------ar")
 
             # build alpha term
 
-            m_parameter = dequantize_tensor(m_parameter)
             m_parameter = m_parameter[2:]
+            m_parameter = dequantize_tensor(m_parameter)
             current_index = 0  # keep track of where to read from parameter_update
             delta = copy.deepcopy(self.model)
             alpha = self.param_groups[0]['rho'] * self.param_groups[0]['lr']
@@ -78,9 +74,7 @@ class AEASGD(Optimizer):
                 cur_parameter.data.add_(-1, cur_delta.data)
 
             # push delta to update x tilde
-            print("----------bs2")
             self.send_message(MessageCode.UpdateTilde, self.squash_model(delta))
-            print("----------as2")
         else:
             self.idx += 1
 

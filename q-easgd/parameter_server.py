@@ -32,7 +32,6 @@ class ParameterServer(object):
             print("1")
             dist.recv(tensor=m_parameter)
             print("2")
-            m_parameter = dequantize_tensor(m_parameter)
             self.receive(int(m_parameter[0].item()),
                          int(m_parameter[1].item()),
                          m_parameter[2:])
@@ -48,6 +47,7 @@ class ParameterServer(object):
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
 
         elif message_code == MessageCode.UpdateTilde:
+            parameter = dequantize_tensor(parameter)
             self.parameter_shard.add_(parameter)
         elif message_code == MessageCode.WorkerTerminate:
             self.num_terminate += 1
@@ -57,12 +57,11 @@ class ParameterServer(object):
         Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
         """
         _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
-        m_parameter = torch.Tensor([dist.get_rank(), message_code])
-        m_parameter = torch.cat((m_parameter, payload))
-        m_parameter = quantize_tensor(m_parameter, self.quantize_num_bits)
-        print("----------bs")
+        m_parameter = quantize_tensor(payload, self.quantize_num_bits)
+        meta = torch.Tensor([dist.get_rank(), message_code]).to(torch.int16)
+        m_parameter = torch.cat((meta, m_parameter))
+
         dist.send(tensor=m_parameter, dst=dst)
-        print("----------as")
 
     @staticmethod
     def squash_model(model):
