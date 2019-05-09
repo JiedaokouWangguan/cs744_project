@@ -42,7 +42,7 @@ def quantize_tensor(x, num_bits):
     m_parameter = torch.Tensor([x1, x2, x3, x4, zero_point])
     m_parameter = torch.cat((q_x, m_parameter))
     print("shabi mp1: {}".format(m_parameter))
-    m_parameter = m_parameter.round().to(torch.int8)
+    m_parameter = m_parameter.round().to(torch.int16)
     print("shabi mp2: {}".format(m_parameter))
     return m_parameter
 
