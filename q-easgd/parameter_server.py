@@ -23,7 +23,7 @@ class ParameterServer(object):
         self.num_terminate = 0
         self.quantize_num_bits = quantize_num_bits
         self.parameter_shard = torch.randn(self.squash_model(self.model).numel())
-        self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7)
+        self.m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).byte()
 
     def start(self):
         _LOGGER.info("Started Running!")
