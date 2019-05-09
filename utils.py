@@ -47,7 +47,6 @@ def quantize_tensor(x, num_bits):
 
 
 def dequantize_tensor(m_parameter):
-    m_parameter = m_parameter.to(torch.int32)
     scale1 = int(m_parameter[-5].item())
     scale2 = int(m_parameter[-4].item())
     scale3 = int(m_parameter[-3].item())
@@ -58,7 +57,7 @@ def dequantize_tensor(m_parameter):
     scale = (scale2 << 8) | scale
     scale = (scale3 << 16) | scale
     scale = (scale4 << 24) | scale
-
+    print(scale)
     scale = pack('I', scale)
     scale = unpack('f', scale)[0]
     zero_point = int(m_parameter[-1].item())
