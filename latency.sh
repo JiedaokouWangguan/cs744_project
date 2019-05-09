@@ -10,7 +10,7 @@ terminate_cluster
 start_time=$(date +%s)
 
 
-if [ $1 -eq 0 ] 
+if [ $1 -eq 0 ]
 then 
     arg_ps="--flag"
 else 
@@ -20,7 +20,7 @@ fi
 sudo tc qdisc add dev eno1 root netem delay $2 
 
 dstat -n > network_$3_$2.csv &
-python ./$3/main.py --world-size 3 --rank $1 $arg_ps --dist-url 'tcp://node0:8088' --quantize-nbits 8;
+python -m $3.main --world-size 3 --rank $1 $arg_ps --dist-url 'tcp://node0:8088' --quantize-nbits 8;
 
 sudo tc qdisc del dev eno1 root netem delay $2 
 
