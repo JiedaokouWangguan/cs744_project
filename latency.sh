@@ -20,8 +20,9 @@ fi
 sudo tc qdisc add dev eno1 root netem delay $2 
 
 dstat -n > network_$3_$2.csv &
-python -m $3.main --world-size 3 --rank $1 $arg_ps --dist-url 'tcp://node0:8088' --quantize-nbits 8;
-
+cd ../
+python -m cs744_project.$3.main --world-size 3 --rank $1 $arg_ps --dist-url 'tcp://node0:8088' --quantize-nbits 8;
+cd ./cs744_project
 sudo tc qdisc del dev eno1 root netem delay $2 
 
 
