@@ -42,7 +42,9 @@ def quantize_tensor(x, num_bits):
     m_parameter = torch.cat((q_x, m_parameter))
 
     m_parameter = m_parameter.round().byte()
-
+    print("-------")
+    print("quanti: {}".format(m_parameter))
+    print("-------")
     return m_parameter
 
 
@@ -57,6 +59,7 @@ def dequantize_tensor(m_parameter):
     scale = (scale2 << 8) | scale
     scale = (scale3 << 16) | scale
     scale = (scale4 << 24) | scale
+    print("-------")
     print("scale1: {}".format(scale))
     scale = pack('i', scale)
     scale = unpack('f', scale)[0]
@@ -66,4 +69,5 @@ def dequantize_tensor(m_parameter):
     print("scale2: {}".format(scale))
     result = scale * (q_x.float() - zero_point)
     print("result: {}".format(result))
+    print("-------")
     return result
