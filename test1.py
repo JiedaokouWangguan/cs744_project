@@ -2,7 +2,7 @@ from struct import pack, unpack
 
 b = pack('f', 342342342300)
 print(342342342300)
-c = unpack('I', b)[0]
+c = unpack('i', b)[0]
 
 # print(unpack('i', b)[0])
 print(c)
@@ -21,7 +21,7 @@ r = (x3 << 16) | r
 r = (x4 << 24) | r
 print(r)
 
-r1 = pack('I', r)
+r1 = pack('i', r)
 r2 = unpack('f', r1)[0]
 print(r2)
 

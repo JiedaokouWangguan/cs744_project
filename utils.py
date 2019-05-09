@@ -32,7 +32,7 @@ def quantize_tensor(x, num_bits):
     q_x.clamp_(qmin, qmax).round_()
 
     b = pack('f', scale)
-    c = unpack('I', b)[0]
+    c = unpack('i', b)[0]
     x1 = 0x000000FF & c
     x2 = (0X0000FF00 & c) >> 8
     x3 = (0x00FF0000 & c) >> 16
@@ -57,8 +57,8 @@ def dequantize_tensor(m_parameter):
     scale = (scale2 << 8) | scale
     scale = (scale3 << 16) | scale
     scale = (scale4 << 24) | scale
-    print(scale)
-    scale = pack('I', scale)
+
+    scale = pack('i', scale)
     scale = unpack('f', scale)[0]
     zero_point = int(m_parameter[-1].item())
     q_x = m_parameter[:-5]
