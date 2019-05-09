@@ -27,7 +27,7 @@ fi
 
 dstat -n > bandwidth_$1_$2_$3_$4.csv &
 cd ../
-python -m $3.main --world-size 3 --rank $1 $arg_ps --dist-url 'tcp://node0:8088' --quantize-nbits $4;
+python -m cs744_project.$3.main --world-size 3 --rank $1 $arg_ps --dist-url 'tcp://node0:8088' --quantize-nbits $4;
 cd ./cs744_project
 
 if [[ $2 != "0" ]]
