@@ -32,7 +32,7 @@ def quantize_tensor(x, num_bits):
     q_x.clamp_(qmin, qmax).round_()
 
     b = pack('f', scale)
-    c = unpack('i', b)[0]
+    c = unpack('l', b)[0]
     x1 = 0x000000FF & c
     x2 = (0X0000FF00 & c) >> 8
     x3 = (0x00FF0000 & c) >> 16
@@ -42,9 +42,6 @@ def quantize_tensor(x, num_bits):
     m_parameter = torch.cat((q_x, m_parameter))
 
     m_parameter = m_parameter.round().byte()
-    print("-------")
-    print("quanti: {}".format(m_parameter))
-    print("-------")
     return m_parameter
 
 
@@ -59,15 +56,9 @@ def dequantize_tensor(m_parameter):
     scale = (scale2 << 8) | scale
     scale = (scale3 << 16) | scale
     scale = (scale4 << 24) | scale
-    print("-------")
-    print("scale1: {}".format(scale))
-    scale = pack('i', scale)
+    scale = pack('l', scale)
     scale = unpack('f', scale)[0]
     zero_point = int(m_parameter[-1].item())
     q_x = m_parameter[:-5]
-    print("q_x: {}".format(q_x))
-    print("scale2: {}".format(scale))
     result = scale * (q_x.float() - zero_point)
-    print("result: {}".format(result))
-    print("-------")
     return result
