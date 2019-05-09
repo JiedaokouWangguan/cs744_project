@@ -47,7 +47,7 @@ def quantize_tensor(x, num_bits):
 
 
 def dequantize_tensor(m_parameter):
-
+    m_parameter = m_parameter.to(torch.int32)
     scale1 = int(m_parameter[-5].item())
     scale2 = int(m_parameter[-4].item())
     scale3 = int(m_parameter[-3].item())
