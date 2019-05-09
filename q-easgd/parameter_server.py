@@ -29,20 +29,16 @@ class ParameterServer(object):
         while self.running:
             _LOGGER.info("Polling for message...")
             m_parameter = torch.zeros(self.squash_model(self.model).numel() + 7).to(torch.int16)
-            print("1")
             dist.recv(tensor=m_parameter)
-            print("2")
             self.receive(int(m_parameter[0].item()),
                          int(m_parameter[1].item()),
                          m_parameter[2:])
-            print("3")
             if self.num_terminate == self.world_size-1:
                 self.running = False
         print("parameter server terminated.")
 
     def receive(self, sender, message_code, parameter):
         _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
-        print("message_code: {}".format(message_code))
         if message_code == MessageCode.PullTilde:
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
 
