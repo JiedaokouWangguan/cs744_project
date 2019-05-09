@@ -45,9 +45,7 @@ class ParameterServer(object):
         _LOGGER.info("Processing message: {} from sender {}".format(message_code, sender))
 
         if message_code == MessageCode.PullTilde:
-            print("----------bs")
             self.send_message(MessageCode.PullTilde, self.parameter_shard, dst=sender)
-            print("----------as")
 
         elif message_code == MessageCode.UpdateTilde:
             self.parameter_shard.add_(parameter)
@@ -62,7 +60,9 @@ class ParameterServer(object):
         m_parameter = torch.Tensor([dist.get_rank(), message_code])
         m_parameter = torch.cat((m_parameter, payload))
         m_parameter = quantize_tensor(m_parameter, self.quantize_num_bits)
+        print("----------bs")
         dist.send(tensor=m_parameter, dst=dst)
+        print("----------as")
 
     @staticmethod
     def squash_model(model):

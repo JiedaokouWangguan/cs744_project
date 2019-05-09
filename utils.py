@@ -12,7 +12,6 @@ class MessageCode(object):
 
 
 def quantize_tensor(x, num_bits):
-    x = x.float()
     qmin = 0.
     qmax = 2.**num_bits - 1.
     min_val, max_val = x.min(), x.max()
