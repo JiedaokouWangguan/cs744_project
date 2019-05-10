@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 easgd_quanti_x = [1, 2, 3, 4, 5]
 easgd_x = [1, 2, 3, 4, 5]
-easgd_quanti_y = [481, 310, 239, 239, 190]
+easgd_quanti_y = [477, 299, 236, 203, 187]
 easgd_y = [923, 480, 307, 287, 219]
 plt.figure(figsize=(8, 4))
 plt.plot(easgd_quanti_x, easgd_quanti_y, color='SkyBlue', label='EASGD with Quantization')
