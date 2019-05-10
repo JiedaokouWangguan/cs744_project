@@ -136,24 +136,23 @@ def main():
                            ]))
         if args.rank == 1:
             traning_set = torch.utils.data.random_split(traning_set, [54000, 6000])[0]
-            batch_size = 128
         elif args.rank == 2:
             traning_set = torch.utils.data.random_split(traning_set, [54000, 6000])[1]
-            batch_size = 32
 
         train_loader = torch.utils.data.DataLoader(traning_set
             ,
-            batch_size=batch_size, shuffle=True, **kwargs)
+            batch_size=args.batch_size, shuffle=True, **kwargs)
         test_loader = torch.utils.data.DataLoader(
             datasets.MNIST('./data%d'%(args.rank), train=False, transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
-        if args.rank == 1:
-            rho = args.rho * 2.0 * 9 / 10
-        else:
-            rho = args.rho * 2.0 / 10
+        # if args.rank == 1:
+        #     rho = args.rho * 2.0 * 9 / 10
+        # else:
+        #     rho = args.rho * 2.0 / 10
+        rho = args.rho
         optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=rho, model=model, quantize_num_bits=args.quantize_nbits)
 
         for epoch in range(1, args.epochs + 1):
