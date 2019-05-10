@@ -147,8 +147,11 @@ def main():
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
-        
-        optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=args.rho, model=model, quantize_num_bits=args.quantize_nbits)
+        if args.rank == 1:
+            rho = args.rho * 2.0 * 9 / 10
+        else:
+            rho = args.rho * 2.0 / 10
+        optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=rho, model=model, quantize_num_bits=args.quantize_nbits)
 
         for epoch in range(1, args.epochs + 1):
             train(args, model, device, train_loader, optimizer, epoch)
