@@ -135,9 +135,9 @@ def main():
                                transforms.Normalize((0.1307,), (0.3081,))
                            ]))
         if args.rank == 1:
-            traning_set = torch.utils.data.random_split(traning_set, [54000, 6000])[0]
+            traning_set = torch.utils.data.random_split(traning_set, [30000, 30000])[0]
         elif args.rank == 2:
-            traning_set = torch.utils.data.random_split(traning_set, [54000, 6000])[1]
+            traning_set = torch.utils.data.random_split(traning_set, [30000, 30000])[1]
 
         train_loader = torch.utils.data.DataLoader(traning_set
             ,
@@ -149,9 +149,9 @@ def main():
             ])),
             batch_size=args.test_batch_size, shuffle=True, **kwargs)
         if args.rank == 1:
-            rho = args.rho * 2.0 * 9 / 10 * 50
+            rho = args.rho * 2.0 * 9 / 10
         else:
-            rho = args.rho * 2.0 / 10 * 50
+            rho = args.rho * 2.0 / 10 
 
         optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=rho, model=model, quantize_num_bits=args.quantize_nbits)
 
