@@ -1,22 +1,13 @@
-import os
-import logging 
 import argparse
-import csv
 import torch
-import torchvision
-import torchvision.transforms as transforms
-import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributed as dist
+from torchvision import datasets, transforms
+from parameter_server import ParameterServer
+from downpour import DownPourSGD
+from ..utils import MessageCode
 
-from datetime import datetime
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
-import pandas as pd
-
-import torch.optim as optim
-from optim.downpour_sgd import DownpourSGD
-from server import ParameterServer
 
 class Net(nn.Module):
     def __init__(self):
@@ -37,160 +28,134 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+def train(args, model, device, train_loader, optimizer, epoch):
+    model.train()
+    for batch_idx, (data, target) in enumerate(train_loader):
 
-def get_dataset(args, transform, rank):
-    """
-    :param dataset_name:
-    :param transform:
-    :param batch_size:
-    :return: iterators for the dataset
-    """
-    if args.dataset == 'MNIST':
-        trainset = torchvision.datasets.MNIST(root='./data%d' % rank, train=True, download=True, transform=transform)
-        testset = torchvision.datasets.MNIST(root='./data%d' % rank, train=False, download=True, transform=transform)
-    else:
-        trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-        testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
 
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
-    return trainloader, testloader
-
-def main(args, rank):
-
-    logs = []
-
-    transform = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize([0.5], [0.5])
-            ])
-
-    trainloader, testloader = get_dataset(args, transform, rank)
-    net = Net()
-
-    if args.no_distributed:
-        optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
-    else:
-        optimizer = DownpourSGD(net.parameters(), lr=args.lr, n_push=args.num_push, n_pull=args.num_pull, model=net)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
-
-    # train
-    net.train()
-    if args.cuda:
-        net = net.cuda()
-
-    for epoch in range(args.epochs):  # loop over the dataset multiple times
-        print("Training for epoch {}".format(epoch))
-        for i, data in enumerate(trainloader, 0):
-            # get the inputs
-            inputs, labels = data
-
-            if args.cuda:
-                inputs, labels = inputs.cuda(), labels.cuda()
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-            # forward + backward + optimize
-            outputs = net(inputs)
-            loss = F.cross_entropy(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-            _, predicted = torch.max(outputs, 1)
-            accuracy = accuracy_score(predicted, labels)
-
-            log_obj = {
-                'timestamp': datetime.now(),
-                'iteration': i,
-                'training_loss': loss.item(),
-                'training_accuracy': accuracy,
-            }
-
-            if i % args.log_interval == 0 and i > 0:    # print every n mini-batches
-#                 log_obj['test_loss'], log_obj['test_accuracy']= evaluate( net, testloader, args)
-                print("Timestamp: {timestamp} | "
-                      "Iteration: {iteration:6} | "
-                      "Loss: {training_loss:6.4f} | "
-                      "Accuracy : {training_accuracy:6.4f} | "
-#                       "Test Loss: {test_loss:6.4f} | "
-#                       "Test Accuracy: {test_accuracy:6.4f}".format(**log_obj)
-                     )
-
-            logs.append(log_obj)
-                
-        val_loss, val_accuracy = evaluate(net, testloader, args, verbose=True)
-        scheduler.step(val_loss)
-
-    df = pd.DataFrame(logs)
-    print(df)
-    if args.no_distributed:
-        if args.cuda:
-            df.to_csv('log/gpu.csv', index_label='index')
-        else:
-            df.to_csv('log/single.csv', index_label='index')
-    else:
-        df.to_csv('log/node{}.csv'.format(dist.get_rank()), index_label='index')
-
-    print('Finished Training')
+        loss = F.nll_loss(output, target)
+        loss.backward()
+        optimizer.step()
+        if batch_idx % args.log_interval == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                       100. * batch_idx / len(train_loader), loss.item()))
 
 
-def evaluate(net, testloader, args, verbose=False):
-    if args.dataset == 'MNIST':
-        classes = [str(i) for i in range(10)]
-    else:
-        classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-    net.eval()
-   
+def test(args, model, device, test_loader):
+    model.eval()
     test_loss = 0
+    correct = 0
     with torch.no_grad():
-        for data in testloader:
-            images, labels = data
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            correct += pred.eq(target.view_as(pred)).sum().item()
 
-            if args.cuda:
-                images, labels = images.cuda(), labels.cuda()
+    test_loss /= len(test_loader.dataset)
 
-            outputs = net(images)
-            _, predicted = torch.max(outputs, 1)
-            test_loss += F.cross_entropy(outputs, labels).item()
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))
 
-    test_accuracy = accuracy_score(predicted, labels)
-    if verbose:
-        print('Loss: {:.3f}'.format(test_loss))
-        print('Accuracy: {:.3f}'.format(test_accuracy))
-        print(classification_report(predicted, labels, target_names=classes))
-    
-    return test_loss, test_accuracy
 
-def init_server():
-    model = Net()
-    server = ParameterServer(model=model)
-    server.run()
+def main():
+    # Training settings
+    # batch size = 32, lr = 0.0001, n = 1
+    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
+    parser.add_argument('--batch-size', type=int, default=32, metavar='N',
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
+                        help='input batch size for testing (default: 1000)')
+    parser.add_argument('--epochs', type=int, default=5, metavar='N',
+                        help='number of epochs to train (default: 5)')
+    parser.add_argument('--lr', type=float, default=0.00001, metavar='LR',
+                        help='learning rate (default: 0.1)')
+    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+                        help='SGD momentum (default: 0.5)')
+    parser.add_argument('--no-cuda', action='store_true', default=False,
+                        help='disables CUDA training')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+                        help='how many batches to wait before logging training status')
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Distbelief training example')
-    parser.add_argument('--batch-size', type=int, default=128, metavar='N', help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N', help='input batch size for testing (default: 10000)')
-    parser.add_argument('--epochs', type=int, default=5, metavar='N', help='number of epochs to train (default: 5)')
-    parser.add_argument('--lr', type=float, default=0.003, metavar='LR', help='learning rate (default: 0.1)')
-    parser.add_argument('--num-pull', type=int, default=5, metavar='N', help='how often to pull params (default: 5)')
-    parser.add_argument('--num-push', type=int, default=5, metavar='N', help='how often to push grads (default: 5)')
-    parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
-    parser.add_argument('--log-interval', type=int, default=20, metavar='N', help='how often to evaluate and print out')
-    parser.add_argument('--no-distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
-    parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
-    parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
-    parser.add_argument('--server', action='store_true', default=False, help='server node?')
-    parser.add_argument('--dataset', type=str, default='MNIST', help='which dataset to train on')
-    parser.add_argument('--dist-url', type=str, default='tcp://127.0.0.1:8088', help='url used to init process group')
+    parser.add_argument('--save-model', action='store_true', default=False,
+                        help='For Saving the current Model')
+    # yuanfang added
+    parser.add_argument('--n-push', default=5, type=int,
+                        help='n push')
+    parser.add_argument('--quantize-nbits', default=0, type=int,
+                        help='quantize')
+    parser.add_argument('--n-pull', default=5, type=int,
+                        help='n pull')
+    parser.add_argument('--world-size', default=-1, type=int,
+                        help='number of nodes for distributed training')
+    parser.add_argument('--rank', default=-1, type=int,
+                        help='node rank for distributed training')
+    parser.add_argument('--dist-url', default='does not work', type=str,
+                        help='url used to set up distributed training')
+    parser.add_argument('--dist-backend', default='gloo', type=str,
+                        help='distributed backend')
+    ps_flag_parser = parser.add_mutually_exclusive_group(required=False)
+    ps_flag_parser.add_argument('--flag', dest='ps_flag', action='store_true')
+    ps_flag_parser.add_argument('--no-flag', dest='ps_flag', action='store_false')
+    parser.set_defaults(ps_flag=False)
+
     args = parser.parse_args()
-    print(args)
+    use_cuda = False
 
-    if not args.no_distributed:
-        """ Initialize the distributed environment.
-        Server and clients must call this as an entry point.
-        """
-        dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size, init_method=args.dist_url)
-        # dist.init_process_group('gloo', rank=args.rank, world_size=args.world_size)
-        if args.server:
-            init_server()
-    main(args, args.rank)
+    torch.manual_seed(args.seed)
+
+    device = torch.device("cuda" if use_cuda else "cpu")
+    model = Net().to(device)
+    if args.ps_flag:
+        print("before init process group")
+        # start a parameter server
+        dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+                                world_size=args.world_size, rank=args.rank)
+        print("after init process group")
+        ps = ParameterServer(model, args.world_size, quantize_num_bits=args.quantize_nbits)
+        print("starting parameter server....")
+        ps.start()
+    else:
+        print("before init process group")
+        # start a worker
+        dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+                                world_size=args.world_size, rank=args.rank)
+
+        print("after init process group")
+        kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
+        train_loader = torch.utils.data.DataLoader(
+            datasets.MNIST('./data%d'%(args.rank), train=True, download=True,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               transforms.Normalize((0.1307,), (0.3081,))
+                           ])),
+            batch_size=args.batch_size, shuffle=True, **kwargs)
+        test_loader = torch.utils.data.DataLoader(
+            datasets.MNIST('./data%d'%(args.rank), train=False, transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+            batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+        optimizer = DownPourSGD(model.parameters(), lr=args.lr, n_push=args.n_push, n_pull=args.n_pull, model=model, quantize_num_bits=args.quantize_nbits)
+
+        for epoch in range(1, args.epochs + 1):
+            train(args, model, device, train_loader, optimizer, epoch)
+            test(args, model, device, test_loader)
+
+        optimizer.send_message(MessageCode.WorkerTerminate, torch.randn(optimizer.squash_model(optimizer.model).numel()))
+
+        if args.save_model:
+            torch.save(model.state_dict(), "mnist_cnn.pt")
+
+
+if __name__ == '__main__':
+    main()
