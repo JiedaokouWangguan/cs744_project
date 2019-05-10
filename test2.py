@@ -1,6 +1,12 @@
 import torch
 from utils import dequantize_tensor, quantize_tensor
 from struct import pack, unpack
+from torchvision import datasets, transforms
+import logging
+import copy
+import torch
+from torch.optim.optimizer import Optimizer, required
+import torch.distributed as dist
 
 
 def quantize(x, num_bits):
@@ -47,18 +53,15 @@ def dequantize(m_parameter):
 
 
 
-a = torch.Tensor([100.2, 23, -12, 1.2])
-b = quantize(a, 8)
-c = dequantize(b)
-print(c)
 
+shabi = datasets.MNIST('./data', train=True, download=True,
+                       transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))])
+                       )
 
-a = torch.Tensor([100.2, 23, -12, 1.2])
-b = quantize_tensor(a, 8)
-c = dequantize_tensor(b)
-print(c)
+fuck = len(shabi)
+print(fuck)
+fuck1 = torch.utils.data.random_split(shabi, [40000, 20000])
+print(len(fuck1[0]))
+print(len(fuck1[1]))
 
-
-
-
-
+a = 1
