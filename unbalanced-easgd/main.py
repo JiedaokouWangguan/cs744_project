@@ -151,7 +151,7 @@ def main():
         if args.rank == 1:
             rho = args.rho * 2.0 * 9 / 10
         else:
-            rho = args.rho * 2.0 / 10 
+            rho = args.rho * 2.0 / 10
 
         optimizer = AEASGD(model.parameters(), lr=args.lr, tau=args.tau, rho=rho, model=model, quantize_num_bits=args.quantize_nbits)
 
